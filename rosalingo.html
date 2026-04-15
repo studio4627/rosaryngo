@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로사링고 - RosaRyngo</title>
+    <style>
+        :root {
+            --bg-color: #fcf9f2;
+            --point-color: #1a4371;
+            --accent-color: #bfa15c;
+            --text-color: #2c3e50;
+            --word-bg: #eae3d2;
+            --error-color: #a52a2a;
+            --success-color: #2e7d32;
+        }
+
+        body {
+            font-family: 'Nanum Myeongjo', serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 480px;
+            height: 95vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .rosary-img {
+            width: 50px;
+            height: auto;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+
+        .progress-container {
+            height: 5px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.4s ease-out;
+        }
+
+        .content-area {
+            height: 70%;
+            flex-grow: 0;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        h2 { 
+            font-size: 1.25rem; 
+            color: var(--point-color); 
+            margin-top: 0; 
+            margin-bottom: 5px;
+        }
+        
+        .mystery-subtitle {
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        .meditation-text { 
+            font-style: italic; 
+            color: #555; 
+            line-height: 1.9; 
+            font-size: 1.05rem;
+            white-space: pre-line;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 90%;    
+            padding: 0 10px;
+            overflow: scroll auto;
+        }
+
+        .answer-area {
+            min-height: 100px;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .word-pool {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: start;
+            gap: 12px;
+            margin-top: auto;
+            margin-bottom: 10px;
+            position: relative;
+            min-height: 160px;
+        }
+
+        #lock-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: transparent;
+            z-index: 50;
+            display: none;
+        }
+
+        .word-chip {
+            padding: 10px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .pool-chip {
+            background-color: var(--word-bg);
+            color: var(--text-color);
+        }
+        
+        .pool-chip.used { 
+            background-color: #f5f5f5; 
+            color: transparent; 
+            cursor: default; 
+        }
+
+        .pool-chip.wrong {
+            background-color: var(--error-color) !important;
+            color: white !important;
+            animation: shake 0.4s;
+        }
+
+        .answer-chip {
+            background-color: var(--point-color);
+            color: white;
+            animation: popIn 0.3s ease-out;
+        }
+
+        .footer {
+            padding: 15px 0;
+        }
+        .btn-next {
+            width: 100%;
+            padding: 16px;
+            background-color: var(--point-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Nanum Myeongjo', serif;
+            cursor: pointer;
+        }
+        
+        .btn-next:disabled { 
+            background-color: #f0f0f0; 
+            color: #ccc; 
+            cursor: default;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.85); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="app">
+    <div class="header">
+        <svg class="rosary-img" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 10 L55 25 L70 25 L60 35 L65 50 L50 40 L35 50 L40 35 L30 25 L45 25 Z" fill="#bfa15c"/>
+            <circle cx="50" cy="65" r="5" fill="#1a4371"/>
+            <circle cx="35" cy="75" r="5" fill="#1a4371"/>
+            <circle cx="65" cy="75" r="5" fill="#1a4371"/>
+        </svg>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <div id="pray-screen" class="content-area">
+        <h2 id="title">기도 로딩중...</h2>
+        <div id="mystery-subtitle" class="mystery-subtitle"></div>
+        
+        <div id="meditation-box" class="meditation-text hidden"></div>
+        
+        <div id="quiz-ui">
+            <div class="answer-area" id="answerArea"></div>
+            <div class="word-pool" id="wordPool">
+                <div id="lock-overlay"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button class="btn-next" id="nextBtn" onclick="nextStep()" disabled>기도문을 완성하세요</button>
+    </div>
+</div>
+
+<script>
+    const mysteries = {
+        0: "영광의 신비", 1: "환희의 신비", 2: "고통의 신비", 3: "영광의 신비", 
+        4: "빛의 신비", 5: "고통의 신비", 6: "환희의 신비"
+    };
+
+    const dan = {
+        0:{ 0: "1단 예수님께서 부활하심을 묵상합시다.",
+            1: "2단 예수님께서 승천하심을 묵상합시다.",
+            2: "3단 예수님께서 성령을 보내심을 묵상합시다.",
+            3: "4단 예수님께서 마리아를 하늘에 불러올리심을 묵상합시다.",
+            4: "5단 예수님께서 마리아께 천상 모후의 관을 씌우심을 묵상합시다."},
+        1:{ 0: "1단 마리아께서 예수님을 잉태하심을 묵상합시다.",
+            1: "2단 마리아께서 엘리사벳을 찾아보심을 묵상합시다.",
+            2: "3단 마리아께서 예수님을 낳으심을 묵상합시다.",
+            3: "4단 마리아께서 예수님을 성전에 바치심을 묵상합시다.",
+            4: "5단 마리아께서 잃으셨던 예수님을 성전에서 찾으심을 묵상합시다."},
+        2:{ },
+        3:{ 0: "1단 예수님께서 부활하심을 묵상합시다.",
+            1: "2단 예수님께서 승천하심을 묵상합시다.",
+            2: "3단 예수님께서 성령을 보내심을 묵상합시다.",
+            3: "4단 예수님께서 마리아를 하늘에 불러올리심을 묵상합시다.",
+            4: "5단 예수님께서 마리아께 천상 모후의 관을 씌우심을 묵상합시다."},
+        4:{},
+        5:{},
+        6:{ 0: "1단 마리아께서 예수님을 잉태하심을 묵상합시다.",
+            1: "2단 마리아께서 엘리사벳을 찾아보심을 묵상합시다.",
+            2: "3단 마리아께서 예수님을 낳으심을 묵상합시다.",
+            3: "4단 마리아께서 예수님을 성전에 바치심을 묵상합시다.",
+            4: "5단 마리아께서 잃으셨던 예수님을 성전에서 찾으심을 묵상합시다."}
+    };
+    
+    const prayers = {
+        sign: ["성부와", "성자와", "성령의", "이름으로", "아멘."],
+        lord: [["하늘에 계신", "우리 아버지,", "아버지의 이름이", "거룩히 빛나시며"],
+        ["아버지의 뜻이", "하늘에서와 같이", "땅에서도 이루어지소서"],
+        ["오늘 저희에게", "일용할 양식을", "주시고","저희에게", "잘못한 이를",  "저희가", "용서하오니"],
+        ["저희 죄를", "용서하시고", "악에서 구하소서","아멘"]],
+        hail: [["은총이", "가득하신", "마리아님,", "기뻐하소서!"],
+        ["주님께서", "함께 계시니", "여인 중에", "복되시며"],
+        ["태중의","아들 예수님", "또한 복되시나이다"],
+        ["천주의 성모" ,"마리아님","이제와 저희", "죽을 때에"],
+        ["저희 죄인을","위하여", "빌어주소서","아멘"]]
+    };
+
+    let currentStep = 0;
+    let targetSentenceArray = [];
+    let currentWordIndex = 0;
+    const todayMyst = mysteries[new Date().getDay()];
+
+    const flow = [
+        { type: 'quiz', title: '성호경', data: prayers.sign },
+        { type: 'meditation', title: '사도신경', text: '전능하신 천주 성부,\n천지의 창조주를 저는 믿나이다.\n그 외아들 우리 주 예수 그리스도님\n성령으로 인하여 동정 마리아께 잉태되어 나시고\n본시오 빌라도 통치 아래서 고난을 받으시고\n십자가에 못 박혀 돌아가시고 묻히셨으며\n저승에 가시어 사흗날에 죽은 이들 가운데서 부활하시고\n하늘에 올라 천주 성부 오른 편에 앉으시며\n그리로부터 산 이와 죽은 이를 심판하러 오시리라 믿나이다.\n성령을 믿으며,\n거룩하고 보편된 교회와 모든 성인의 통공을 믿으며\n죄의 용서와 육신의 부활을 믿으며\n영원한 삶을 믿나이다.\n\n아멘.' },
+        { type: 'quiz', title: '주님의 기도', data: prayers.lord[0] },
+        { type: 'quiz', title: '주님의 기도', data: prayers.lord[1] },
+        { type: 'quiz', title: '주님의 기도', data: prayers.lord[2] },
+        { type: 'quiz', title: '주님의 기도', data: prayers.lord[3] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송', data: prayers.hail[4] },
+        { type: 'meditation', title: '영광송', text: '영광이 성부와 성자와 성령께\n처음과 같이 이제와 항상 영원히\n\n아멘.' },
+        { type: 'meditation', title: '구원송', text: '예수님, 저희 죄를 용서하시며\n저희를 지옥 불에서 구하시고\n연옥 영혼을 돌보시며\n가장 버림받은 영혼을 돌보소서.' },
+        { type: 'meditation', title: '묵상', text: `[ ${todayMyst} ${dan[todayMyst[0]]} ]\n` },
+        { type: 'quiz', title: '주님의 기도', data: prayers.lord },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[4] },
+        { type: 'meditation', title: '영광송', text: '영광이 성부와 성자와 성령께\n처음과 같이 이제와 항상 영원히\n\n아멘.' },
+        { type: 'meditation', title: '구원송', text: '예수님, 저희 죄를 용서하시며\n저희를 지옥 불에서 구하시고\n연옥 영혼을 돌보시며\n가장 버림받은 영혼을 돌보소서.' },
+        { type: 'meditation', title: '묵상', text: `[ ${todayMyst} ${dan[todayMyst[0]]} ]\n` },
+        { type: 'quiz', title: '주님의 기도', data: prayers.lord },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[4] },
+        { type: 'meditation', title: '영광송', text: '영광이 성부와 성자와 성령께\n처음과 같이 이제와 항상 영원히\n\n아멘.' },
+        { type: 'meditation', title: '구원송', text: '예수님, 저희 죄를 용서하시며\n저희를 지옥 불에서 구하시고\n연옥 영혼을 돌보시며\n가장 버림받은 영혼을 돌보소서.' },
+        { type: 'meditation', title: '묵상', text: `[ ${todayMyst} ${dan[todayMyst[1]]} ]\n` },
+        { type: 'quiz', title: '주님의 기도', data: prayers.lord },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[4] },
+        { type: 'meditation', title: '영광송', text: '영광이 성부와 성자와 성령께\n처음과 같이 이제와 항상 영원히\n\n아멘.' },
+        { type: 'meditation', title: '구원송', text: '예수님, 저희 죄를 용서하시며\n저희를 지옥 불에서 구하시고\n연옥 영혼을 돌보시며\n가장 버림받은 영혼을 돌보소서.' },
+        { type: 'meditation', title: '묵상', text: `[ ${todayMyst} ${dan[todayMyst[2]]} ]\n` },
+        { type: 'quiz', title: '주님의 기도', data: prayers.lord },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[4] },
+        { type: 'meditation', title: '영광송', text: '영광이 성부와 성자와 성령께\n처음과 같이 이제와 항상 영원히\n\n아멘.' },
+        { type: 'meditation', title: '구원송', text: '예수님, 저희 죄를 용서하시며\n저희를 지옥 불에서 구하시고\n연옥 영혼을 돌보시며\n가장 버림받은 영혼을 돌보소서.' },
+        { type: 'meditation', title: '묵상', text: `[ ${todayMyst} ${dan[todayMyst[3]]} ]\n` },
+        { type: 'quiz', title: '주님의 기도', data: prayers.lord },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[4] },
+        { type: 'meditation', title: '영광송', text: '영광이 성부와 성자와 성령께\n처음과 같이 이제와 항상 영원히\n\n아멘.' },
+        { type: 'meditation', title: '구원송', text: '예수님, 저희 죄를 용서하시며\n저희를 지옥 불에서 구하시고\n연옥 영혼을 돌보시며\n가장 버림받은 영혼을 돌보소서.' },
+        { type: 'meditation', title: '묵상', text: `[ ${todayMyst} ${dan[todayMyst[4]]} ]\n` },
+        { type: 'quiz', title: '주님의 기도', data: prayers.lord },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 I', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 II', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 III', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IV', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 V', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VI', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 VIII', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 IX', data: prayers.hail[4] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[0] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[1] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[2] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[3] },
+        { type: 'quiz', title: '성모송 X', data: prayers.hail[4] },
+        { type: 'meditation', title: '영광송', text: '영광이 성부와 성자와 성령께\n처음과 같이 이제와 항상 영원히\n\n아멘.' },
+        { type: 'meditation', title: '구원송', text: '예수님, 저희 죄를 용서하시며\n저희를 지옥 불에서 구하시고\n연옥 영혼을 돌보시며\n가장 버림받은 영혼을 돌보소서.' },
+        { type: 'meditation', title: '성모 찬송', text: '모후이시며 사랑이 넘친 어머니,\n우리의 생명, 기쁨, 희망이시여,\n\n당신 우러러 하와의 그 자손들이\n눈물을 흘리며 부르짖나이다,\n슬픔의 골짜기에서.\n\n우리들의 보호자 성모님,\n불쌍한 저희를\n인자로운 눈으로 굽어보소서.\n\n귀양살이 끝날 때에\n당신의 아들 우리 주 예수님 뵙게 하소서.\n너그러우시고 자애로우시며\n오! 아름다우신 동정 마리아님.\n\n천주의 성모님, 저희를 위하여 빌어 주시어\n그리스도께서 약속하신 영원한 생명을 얻게 하소서.'},
+        { type: 'quiz', title: '성호경', data: prayers.sign },
+    ];
+
+    function init() {
+        document.getElementById('mystery-subtitle').innerText = `${todayMyst} 바치는 날`;
+        loadStep(0);
+    }
+
+    function loadStep(index) {
+        if(index >= flow.length) {
+            alert(`기도를 마쳤습니다.\n평화가 함께하시길.`);
+            location.reload();
+            return;
+        }
+        currentStep = index;
+        const step = flow[index];
+        const nextBtn = document.getElementById('nextBtn');
+        
+        document.getElementById('title').innerText = step.title;
+        updateProgress();
+
+        if(step.type === 'quiz') {
+            document.getElementById('quiz-ui').classList.remove('hidden');
+            document.getElementById('meditation-box').classList.add('hidden');
+            nextBtn.classList.add('hidden'); // 퀴즈에선 버튼 숨김 (자동이동)
+            setupQuiz(step.data);
+        } else {
+            document.getElementById('quiz-ui').classList.add('hidden');
+            document.getElementById('meditation-box').classList.remove('hidden');
+            document.getElementById('meditation-box').innerText = step.text;
+            
+            nextBtn.classList.remove('hidden');
+            nextBtn.disabled = false;
+            nextBtn.innerText = "계속하기";
+        }
+    }
+
+    function setupQuiz(sentenceArray) {
+        targetSentenceArray = sentenceArray;
+        currentWordIndex = 0;
+
+        const answerArea = document.getElementById('answerArea');
+        const wordPool = document.getElementById('wordPool');
+        
+        answerArea.innerHTML = '';
+        wordPool.querySelectorAll('.pool-chip').forEach(chip => chip.remove());
+
+        const shuffledWords = [...sentenceArray].sort(() => Math.random() - 0.5);
+
+        shuffledWords.forEach((word) => {
+            const chip = document.createElement('div');
+            chip.className = 'word-chip pool-chip';
+            chip.innerText = word;
+            chip.dataset.word = word; 
+            chip.onclick = () => handleWordClick(chip);
+            wordPool.appendChild(chip);
+        });
+    }
+
+    function handleWordClick(clickedChip) {
+        if(clickedChip.classList.contains('used') || clickedChip.classList.contains('wrong')) return;
+
+        const clickedWord = clickedChip.dataset.word;
+        const correctWord = targetSentenceArray[currentWordIndex];
+
+        if (clickedWord === correctWord) {
+            clickedChip.classList.add('used');
+            const ansChip = document.createElement('div');
+            ansChip.className = 'word-chip answer-chip';
+            ansChip.innerText = clickedWord;
+            document.getElementById('answerArea').appendChild(ansChip);
+
+            currentWordIndex++;
+
+            if(currentWordIndex === targetSentenceArray.length) {
+                // 문장 완성 시 0.5초 대기 후 자동 이동
+                document.getElementById('lock-overlay').style.display = 'block';
+                setTimeout(nextStep, 500);
+            }
+        } else {
+            failFeedback(clickedChip);
+        }
+    }
+
+    function failFeedback(chip) {
+        chip.classList.add('wrong');
+        const overlay = document.getElementById('lock-overlay');
+        overlay.style.display = 'block';
+        setTimeout(() => {
+            chip.classList.remove('wrong');
+            overlay.style.display = 'none';
+        }, 600);
+    }
+
+    function nextStep() {
+        document.getElementById('lock-overlay').style.display = 'none';
+        loadStep(currentStep + 1);
+    }
+
+    function updateProgress() {
+        const percent = (currentStep / (flow.length - 1)) * 100;
+        document.getElementById('progressBar').style.width = percent + "%";
+    }
+
+    init();
+</script>
+
+</body>
+</html>
